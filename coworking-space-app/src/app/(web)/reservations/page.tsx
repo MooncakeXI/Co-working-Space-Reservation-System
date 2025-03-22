@@ -1,20 +1,28 @@
-'use client'
+'use client';
+
 import { useSearchParams } from "next/navigation";
 import DateReserve from "@/components/DateReserve";
+import Image from "next/image";
+
 export default function Reservation() {
-    
-    const urlParams = useSearchParams();
-    const cid = urlParams.get('id');
-    const model = urlParams.get('model');
+  const urlParams = useSearchParams();
+  const cid = urlParams.get("id");
+  const model = urlParams.get("model");
 
-    return (
-        <main className="w-[100%] flex flex-col items-center space-y-4">
-            <div className="text-xl font-medium">Room Booking</div>
-            <div className="text-xl font-medium"> Chain Store: {model} </div>
-            <div className="w-fit space-y-2">
-                <DateReserve />
-            </div>
+  return (
+    <main className="min-h-screen pt-[80px] pb-20 px-4 flex flex-col items-center bg-gradient-to-b from-white to-cyan-50">
+      <div className="text-center mb-10">
+        <h1 className="text-3xl font-bold text-sky-700 mb-2">Room Reservation</h1>
+        {model && <p className="text-lg text-gray-700">Location: <span className="font-semibold text-cyan-700">{model}</span></p>}
+      </div>
 
-        </main>
-    )
+      <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-2xl animate-fade-up">
+        <DateReserve />
+      </div>
+
+      <div className="mt-10 text-center text-gray-400 text-sm">
+        {cid && <p>Reservation Code: <span className="font-mono">{cid}</span></p>}
+      </div>
+    </main>
+  );
 }

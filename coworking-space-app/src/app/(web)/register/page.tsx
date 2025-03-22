@@ -23,10 +23,10 @@ export default function Register() {
         },
         body: JSON.stringify(form),
       });
-  
+
       const data = await res.json().catch(() => ({}));
       console.log("REGISTER RESPONSE", res.status, data);
-  
+
       if (res.ok && data.success) {
         alert("Account created! You can now sign in.");
         router.push("/api/auth/signin");
@@ -40,39 +40,49 @@ export default function Register() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-2 max-w-md mx-auto p-4">
-      <h2 className="text-xl font-semibold text-center">Register</h2>
-      <input
-        type="text"
-        placeholder="Name"
-        onChange={(e) => setForm({ ...form, name: e.target.value })}
-        required
-        className="border p-2"
-      />
-      <input
-        type="email"
-        placeholder="Email"
-        onChange={(e) => setForm({ ...form, email: e.target.value })}
-        required
-        className="border p-2"
-      />
-      <input
-        type="tel"
-        placeholder="Telephone Number"
-        onChange={(e) => setForm({ ...form, telephone_number: e.target.value })}
-        required
-        className="border p-2"
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        onChange={(e) => setForm({ ...form, password: e.target.value })}
-        required
-        className="border p-2"
-      />
-      <button type="submit" className="bg-cyan-600 text-white py-2 mt-2">
-        Create Account
-      </button>
-    </form>
+    <div className="min-h-screen bg-gradient-to-b from-white to-cyan-50 flex items-center justify-center px-4">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white shadow-lg rounded-lg p-8 max-w-md w-full space-y-4"
+      >
+        <h2 className="text-2xl font-bold text-sky-700 text-center mb-4">Create Your Account</h2>
+
+        <input
+          type="text"
+          placeholder="Full Name"
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          required
+          className="border border-gray-300 p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-sky-500"
+        />
+        <input
+          type="email"
+          placeholder="Email Address"
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
+          required
+          className="border border-gray-300 p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-sky-500"
+        />
+        <input
+          type="tel"
+          placeholder="Phone Number"
+          onChange={(e) => setForm({ ...form, telephone_number: e.target.value })}
+          required
+          className="border border-gray-300 p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-sky-500"
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          onChange={(e) => setForm({ ...form, password: e.target.value })}
+          required
+          className="border border-gray-300 p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-sky-500"
+        />
+
+        <button
+          type="submit"
+          className="w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-4 rounded transition"
+        >
+          Create Account
+        </button>
+      </form>
+    </div>
   );
 }

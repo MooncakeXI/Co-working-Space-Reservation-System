@@ -50,29 +50,13 @@ export default function Banner() {
               }}
               className="bg-white text-cyan-600 font-semibold px-4 py-2 rounded hover:bg-cyan-600 hover:text-white transition"
             >
-              Register
+              SignUp
             </button>
           </div>
         )}
 
-        {/* Greeting if signed in */}
-        {session && (
-          <div className="mt-4 text-xl font-semibold text-white drop-shadow-md">
-            Hello {session.user?.name}
-          </div>
-        )}
       </div>
 
-      {/* Call-to-action button */}
-      <button
-        className="bg-white text-cyan-600 border border-cyan-600 font-semibold py-2 px-3 m-4 rounded z-30 absolute bottom-4 right-4 hover:bg-cyan-600 hover:text-white hover:border-transparent"
-        onClick={(e) => {
-          e.stopPropagation();
-          router.push("/car");
-        }}
-      >
-        Select Your Travel Partner NOW
-      </button>
     </div>
   );
 }

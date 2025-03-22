@@ -20,7 +20,7 @@ export default function TopMenu() {
       <div className="flex gap-4 items-center text-base font-semibold text-sky-800">
         <TopMenuItem title="Coworking" pageRef="/coworkingspace" />
         <TopMenuItem title="Reservations" pageRef="/reservations" />
-        <TopMenuItem title="Booking" pageRef="/booking" />
+        <TopMenuItem title="My Booking" pageRef="/mybooking" />
         <TopMenuItem title="Contact" pageRef="/contact" />
         <TopMenuItem title="About" pageRef="/about" />
       </div>
