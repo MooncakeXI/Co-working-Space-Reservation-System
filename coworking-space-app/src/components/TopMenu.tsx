@@ -1,35 +1,48 @@
-import Image from "next/image";
+'use client';
+
 import TopMenuItem from "./TopMenuItem";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import { Link } from "@mui/material";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
+export default function TopMenu() {
+  const { data: session } = useSession();
 
-export default async function TopMenu() {
-    
-    const session = await getServerSession(authOptions);
-    return(
-        <div className="h-[50px] bg-white fixed top-0 left-0 right-0 z-30 border-t border-b border-gray-300 flex flex-row items-center">
-            <Image src='/img/logo.png' className='h-full w-auto' alt = 'Logo'
-            width={0} height={0} sizes="100vh" />
-            <TopMenuItem title='Coworking Space' pageRef='/coworkingspaces' />
-            <TopMenuItem title='Reservations' pageRef='/reservations' />
-            <TopMenuItem title='About Us' pageRef='/about' />
-            <div className="absolute right-0 h-full flex flex-row ">
-            <TopMenuItem title='Booking' pageRef='/cart' />
-            <Link href="/register">
-            <div className="flex items-center h-full px-2 text-cyan-600 text-sm">Register</div>
-            </Link>
-            {
-                session ? 
-                <Link href = "api/auth/signout">
-                <div className="flex items-center h-full px-2 text-cyan-600 text-sm">
-                Sign Out of {session.user?.name}</div></Link>
-                : <Link href = "api/auth/signin">
-                <div className="flex items-center h-full px-2 text-cyan-600 text-sm">
-                Sign In </div></Link>
-            }
-            </div>
-        </div>
-    );
+  return (
+    <div className="h-[60px] bg-white fixed top-0 left-0 right-0 z-30 border-b border-gray-200 shadow-sm px-6 flex items-center justify-between">
+
+      {/* Left: Logo */}
+      <div className="text-2xl font-bold text-sky-700 hover:text-sky-900 transition cursor-pointer">
+        <Link href="/">Mk</Link>
+      </div>
+
+      {/* Center: Navigation menu (compact) */}
+      <div className="flex gap-1 items-center text-sm font-medium">
+        <TopMenuItem title="Coworking" pageRef="/coworkingspace" />
+        <TopMenuItem title="Reservations" pageRef="/reservations" />
+        <TopMenuItem title="Booking" pageRef="/booking" />
+        <TopMenuItem title="Contact" pageRef="/contact" />
+        <TopMenuItem title="About" pageRef="/about" />
+      </div>
+
+      {/* Right: Auth Icon */}
+      <div>
+        {session ? (
+          <Link href="/api/auth/signout">
+            <AccountCircleIcon
+              fontSize="large"
+              className="text-cyan-600 hover:text-cyan-800 cursor-pointer"
+            />
+          </Link>
+        ) : (
+          <Link href="/api/auth/signin">
+            <AccountCircleIcon
+              fontSize="large"
+              className="text-cyan-600 hover:text-cyan-800 cursor-pointer"
+            />
+          </Link>
+        )}
+      </div>
+    </div>
+  );
 }
