@@ -9,15 +9,15 @@ export default function TopMenu() {
   const { data: session } = useSession();
 
   return (
-    <div className="h-[60px] bg-white fixed top-0 left-0 right-0 z-30 border-b border-gray-200 shadow-sm px-6 flex items-center justify-between">
+    <div className="h-[64px] bg-gradient-to-r from-sky-100 to-white fixed top-0 left-0 right-0 z-30 border-b border-sky-200 shadow-md px-6 flex items-center justify-between font-sans">
 
       {/* Left: Logo */}
-      <div className="text-2xl font-bold text-sky-700 hover:text-sky-900 transition cursor-pointer">
+      <div className="text-3xl font-bold text-sky-700 hover:text-sky-900 transition cursor-pointer tracking-wide">
         <Link href="/">Mk</Link>
       </div>
 
-      {/* Center: Navigation menu (compact) */}
-      <div className="flex gap-1 items-center text-sm font-medium">
+      {/* Center: Navigation menu */}
+      <div className="flex gap-4 items-center text-base font-semibold text-sky-800">
         <TopMenuItem title="Coworking" pageRef="/coworkingspace" />
         <TopMenuItem title="Reservations" pageRef="/reservations" />
         <TopMenuItem title="Booking" pageRef="/booking" />
@@ -25,20 +25,21 @@ export default function TopMenu() {
         <TopMenuItem title="About" pageRef="/about" />
       </div>
 
+
       {/* Right: Auth Icon */}
       <div>
         {session ? (
-          <Link href="/api/auth/signout">
+          <Link href="/api/auth/signout" title="Sign Out">
             <AccountCircleIcon
               fontSize="large"
-              className="text-cyan-600 hover:text-cyan-800 cursor-pointer"
+              className="text-sky-600 hover:text-sky-800 transition cursor-pointer"
             />
           </Link>
         ) : (
-          <Link href="/api/auth/signin">
+          <Link href="/api/auth/signin" title="Sign In">
             <AccountCircleIcon
               fontSize="large"
-              className="text-cyan-600 hover:text-cyan-800 cursor-pointer"
+              className="text-sky-600 hover:text-sky-800 transition cursor-pointer"
             />
           </Link>
         )}

@@ -42,7 +42,7 @@ export default function Footer() {
         <div>
           <h3 className="text-gray-400 font-semibold mb-2">LEGAL</h3>
           <p className="text-sky-700">
-            Copyright © 2024 - All rights reserved by MRS Co.,Ltd
+            Copyright © 2024 - All rights reserved by Mk Co.,Ltd
           </p>
         </div>
       </div>
