@@ -2,14 +2,13 @@ import React from 'react';
 
 function ContactBanner() {
     return (
-        <div className="hero min-h-[32vh]" style={{ backgroundImage: 'url(/img/banner2.jpg)' }}>
-            <div className="hero-overlay bg-opacity-60"></div>
-            <div className="hero-content text-center text-white">
-                <div className="max-w-2xl animate-fade-down animate-once">
-                    <p className='mb-8'>Partner with us to enhance customer experiences! Join today.</p>
-                    <h1 className="mb-5 text-5xl font-bold">Contact Us</h1>
-                </div>
-            </div>
+        <div className="min-h-[40vh] bg-gradient-to-r from-sky-200 via-sky-100 to-white flex items-center justify-center">
+          <div className="text-center px-6 py-12 animate-fade-up">
+            <p className="text-sky-600 text-lg font-medium mb-2">
+              Partner with us to enhance workspace experiences!
+            </p>
+            <h1 className="text-5xl font-bold text-sky-800">Contact Us</h1>
+          </div>
         </div>
     );
 }

@@ -16,7 +16,7 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:5000/api/v1/auth/register", {
+      const res = await fetch("https://project-backend-co-working-space.vercel.app/api/v1/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -52,28 +52,28 @@ export default function Register() {
           placeholder="Full Name"
           onChange={(e) => setForm({ ...form, name: e.target.value })}
           required
-          className="border border-gray-300 p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-sky-500"
+          className="border border-gray-300 p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-sky-500 text-black"
         />
         <input
           type="email"
           placeholder="Email Address"
           onChange={(e) => setForm({ ...form, email: e.target.value })}
           required
-          className="border border-gray-300 p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-sky-500"
+          className="border border-gray-300 p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-sky-500 text-black"
         />
         <input
           type="tel"
           placeholder="Phone Number"
           onChange={(e) => setForm({ ...form, telephone_number: e.target.value })}
           required
-          className="border border-gray-300 p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-sky-500"
+          className="border border-gray-300 p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-sky-500 text-black"
         />
         <input
           type="password"
           placeholder="Password"
           onChange={(e) => setForm({ ...form, password: e.target.value })}
           required
-          className="border border-gray-300 p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-sky-500"
+          className="border border-gray-300 p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-sky-500 text-black"
         />
 
         <button
