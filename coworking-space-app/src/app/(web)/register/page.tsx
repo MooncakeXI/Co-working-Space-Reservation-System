@@ -29,7 +29,7 @@ export default function Register() {
 
       if (res.ok && data.success) {
         alert("Account created! You can now sign in.");
-        router.push("/api/auth/signin");
+        router.push("/signin"); // ✅ แก้ตรงนี้
       } else {
         alert(data.msg || data.error || "Registration failed");
       }

@@ -9,8 +9,8 @@ export default function Footer() {
           <h3 className="text-gray-400 font-semibold mb-2">SERVICES</h3>
           <ul className="space-y-1">
             <li>
-              <Link href="/availability" className="hover:underline text-sky-700">
-                Availability
+              <Link href="/coworkingspace" className="hover:underline text-sky-700">
+                Co-Working Space
               </Link>
             </li>
             <li>
@@ -42,7 +42,7 @@ export default function Footer() {
         <div>
           <h3 className="text-gray-400 font-semibold mb-2">LEGAL</h3>
           <p className="text-sky-700">
-            Copyright © 2024 - All rights reserved by Mk Co.,Ltd
+            Copyright © 2025 - All rights reserved by Mk Co.,Ltd
           </p>
         </div>
       </div>

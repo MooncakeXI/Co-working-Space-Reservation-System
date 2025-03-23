@@ -1,49 +1,170 @@
 "use client";
 
-import { useState } from "react";
-import { DatePicker } from "@mui/x-date-pickers";
+import { useEffect, useState } from "react";
+import {
+  TextField,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl,
+  CircularProgress,
+} from "@mui/material";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { Select, MenuItem, TextField, InputLabel, FormControl } from "@mui/material";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import { addBooking } from "@/redux/features/bookSlice";
 import dayjs, { Dayjs } from "dayjs";
+import getCoworkingspaces from "@/libs/getCoworkingspaces";
+import { useSearchParams } from "next/navigation";
+
+type Coworking = {
+  _id: string;
+  name: string;
+  address?: string;
+  telephone_number?: string;
+  openTime?: string;
+  closeTime?: string;
+};
 
 export default function DateReserve() {
   const dispatch = useDispatch<AppDispatch>();
+  const searchParams = useSearchParams();
+  const modelFromURL = searchParams.get("model");
 
-  const [name, setName] = useState<string>("");
-  const [tel, setTel] = useState<string>("");
-  const [coworkingspace, setCoworkingspace] = useState<string>("");
+  const [name, setName] = useState("");
+  const [tel, setTel] = useState("");
+  const [coworkingspace, setCoworkingspace] = useState("");
   const [startTime, setStartTime] = useState<Dayjs | null>(null);
   const [endTime, setEndTime] = useState<Dayjs | null>(null);
   const [roomNumber, setRoomNumber] = useState<number>(0);
+  const [coworkingspaceList, setCoworkingspaceList] = useState<Coworking[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const makeReservation = () => {
-    if (name && tel && coworkingspace && startTime && endTime && roomNumber) {
-      const item = {
-        nameLastname: name,
-        tel: tel,
-        coworkingspace: coworkingspace,
-        startTime: dayjs(startTime).format("YYYY/MM/DD"),
-        endTime: dayjs(endTime).format("YYYY/MM/DD"),
+  const selectedBranch = coworkingspaceList.find(
+    (branch) => branch.name === coworkingspace
+  );
+
+  useEffect(() => {
+    const fetchCoworkingspaces = async () => {
+      try {
+        const res = await getCoworkingspaces();
+        if (Array.isArray(res.data)) {
+          setCoworkingspaceList(res.data);
+          if (modelFromURL) {
+            const match = res.data.find(
+              (branch: Coworking) =>
+                branch.name.toLowerCase() === modelFromURL.toLowerCase()
+            );
+            if (match) {
+              setCoworkingspace(match.name);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching coworkingspaces:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCoworkingspaces();
+  }, [modelFromURL]);
+
+  const isRoomAvailable = async (): Promise<boolean> => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(
+        `https://project-backend-co-working-space.vercel.app/api/v1/reservations?coworkingspace=${selectedBranch?._id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = await res.json();
+
+      if (!res.ok || !Array.isArray(data.reservations)) {
+        console.error("Invalid reservation data", data);
+        return false;
+      }
+
+      return !data.reservations.some((r: any) => {
+        return (
+          r.room_number === roomNumber &&
+          dayjs(startTime).isBefore(dayjs(r.endTime)) &&
+          dayjs(endTime).isAfter(dayjs(r.startTime))
+        );
+      });
+    } catch (error) {
+      console.error("Error checking room availability:", error);
+      return false;
+    }
+  };
+
+  const makeReservation = async () => {
+    if (
+      name &&
+      tel &&
+      coworkingspace &&
+      startTime &&
+      endTime &&
+      roomNumber &&
+      selectedBranch
+    ) {
+      const userId = localStorage.getItem("userId");
+      const token = localStorage.getItem("token");
+  
+      if (!userId || !token) {
+        alert("You must be logged in to make a reservation.");
+        return;
+      }
+  
+      const reservation = {
+        user: userId,
+        coworkingspace: selectedBranch._id,
+        startTime: dayjs(startTime).toISOString(),
+        endTime: dayjs(endTime).toISOString(),
         room_number: roomNumber,
       };
-
-      console.log("Dispatching item:", item);
-      dispatch(addBooking(item));
-      alert("Your booking has been submitted!");
+  
+      try {
+        const res = await fetch(
+          "https://project-backend-co-working-space.vercel.app/api/v1/reservations",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(reservation),
+          }
+        );
+  
+        const data = await res.json();
+  
+        if (res.ok) {
+          alert("Your booking has been submitted!");
+          console.log("Reservation created:", data);
+        } else {
+          console.error("Reservation error:", data);
+          alert(data.message || "This room is already booked at that time.");
+        }
+      } catch (err) {
+        console.error("Failed to create reservation:", err);
+        alert("Failed to create reservation.");
+      }
     } else {
       alert("Please fill in all fields!");
     }
   };
+  
 
   return (
     <div className="bg-white rounded-xl shadow-md p-6 w-full max-w-2xl flex flex-wrap gap-6 justify-center">
       <TextField
         fullWidth
-        name="Name-Lastname"
         label="Full Name"
         variant="outlined"
         value={name}
@@ -52,7 +173,6 @@ export default function DateReserve() {
 
       <TextField
         fullWidth
-        name="Contact-Number"
         label="Phone Number"
         variant="outlined"
         value={tel}
@@ -67,20 +187,47 @@ export default function DateReserve() {
           onChange={(e) => setCoworkingspace(e.target.value)}
           label="Coworking Branch"
         >
-          <MenuItem value="Bloom">The Bloom Pavilion</MenuItem>
-          <MenuItem value="Spark">Spark Space</MenuItem>
-          <MenuItem value="GrandTable">The Grand Table</MenuItem>
+          {loading ? (
+            <MenuItem disabled>
+              <CircularProgress size={20} /> Loading...
+            </MenuItem>
+          ) : coworkingspaceList.length > 0 ? (
+            coworkingspaceList.map((branch: Coworking) => (
+              <MenuItem key={branch._id} value={branch.name}>
+                {branch.name}
+              </MenuItem>
+            ))
+          ) : (
+            <MenuItem disabled>No branches available</MenuItem>
+          )}
         </Select>
       </FormControl>
 
+      {selectedBranch && (
+        <div className="w-full bg-gradient-to-r from-cyan-50 to-white border border-cyan-100 rounded-xl p-4 shadow-inner space-y-1 text-sm text-gray-700">
+          <p>
+            <span className="font-semibold text-sky-800">📍 Address:</span>{" "}
+            {selectedBranch.address || "N/A"}
+          </p>
+          <p>
+            <span className="font-semibold text-sky-800">📞 Phone:</span>{" "}
+            {selectedBranch.telephone_number || "N/A"}
+          </p>
+          <p>
+            <span className="font-semibold text-sky-800">🕒 Open:</span>{" "}
+            {selectedBranch.openTime || "?"} - {selectedBranch.closeTime || "?"}
+          </p>
+        </div>
+      )}
+
       <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <DatePicker
-          label="Start Date"
+        <DateTimePicker
+          label="Start Date & Time"
           value={startTime}
           onChange={(newDate) => setStartTime(newDate)}
         />
-        <DatePicker
-          label="End Date"
+        <DateTimePicker
+          label="End Date & Time"
           value={endTime}
           onChange={(newDate) => setEndTime(newDate)}
         />
@@ -88,7 +235,6 @@ export default function DateReserve() {
 
       <TextField
         fullWidth
-        name="Room-Number"
         label="Room Number"
         variant="outlined"
         type="number"
@@ -106,4 +252,4 @@ export default function DateReserve() {
       </div>
     </div>
   );
-} 
+}

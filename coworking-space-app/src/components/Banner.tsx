@@ -1,14 +1,22 @@
 "use client";
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import Image from "next/image";
 
 export default function Banner() {
   const covers = ["/img/cover.jpg", "/img/cover2.jpg", "/img/cover3.jpg"];
   const [index, setIndex] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const router = useRouter();
-  const { data: session } = useSession();
+
+  useEffect(() => {
+    // ✅ เช็ค token ใน localStorage
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
+      setIsLoggedIn(!!token);
+    }
+  }, []);
 
   return (
     <div
@@ -28,16 +36,16 @@ export default function Banner() {
       <div className="absolute inset-0 z-20 flex flex-col justify-center items-center text-white bg-black/30">
         <h1 className="text-4xl font-bold drop-shadow-lg">Find Your Perfect Workspace</h1>
         <h3 className="text-xl font-serif mt-2 drop-shadow-md">
-        Book your coworking space with ease & flexibility
+          Book your coworking space with ease & flexibility
         </h3>
 
         {/* Sign in / Register buttons */}
-        {!session && (
+        {!isLoggedIn && (
           <div className="mt-6 flex gap-4">
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                router.push("/api/auth/signin");
+                router.push("/signin");
               }}
               className="bg-white text-cyan-600 font-semibold px-4 py-2 rounded hover:bg-cyan-600 hover:text-white transition"
             >
@@ -50,13 +58,11 @@ export default function Banner() {
               }}
               className="bg-white text-cyan-600 font-semibold px-4 py-2 rounded hover:bg-cyan-600 hover:text-white transition"
             >
-              SignUp
+              Sign Up
             </button>
           </div>
         )}
-
       </div>
-
     </div>
   );
 }

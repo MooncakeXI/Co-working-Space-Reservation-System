@@ -41,4 +41,4 @@ function ContactBody() {
     )
 }
 
-export default ContactBody
+export default ContactBody;

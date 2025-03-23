@@ -1,15 +1,17 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import CoworkingCard from "./CoworkingCard";
-import  getCoworkingspaces  from "@/libs/getCoworkingspaces";
+import getCoworkingspaces from "@/libs/getCoworkingspaces";
 
 type Coworking = {
   _id: string;
   name: string;
-  location: string;
-  image: string;
-  hours: string;
-  features: string[];
+  address: string;
+  telephone_number: string;
+  openTime: string;
+  closeTime: string;
+  image?: string;
 };
 
 export default function CoworkingList() {
@@ -20,12 +22,13 @@ export default function CoworkingList() {
     getCoworkingspaces()
       .then((data) => {
         console.log("Fetched coworking spaces:", data);
-        setSpaces(data.data); // ✅ แก้ตรงนี้! ใช้เฉพาะ .data
+        setSpaces(data.data); // ✅ ใช้ .data
       })
-      .catch((err) => console.error("Error loading coworking spaces:", err))
+      .catch((err) =>
+        console.error("Error loading coworking spaces:", err)
+      )
       .finally(() => setLoading(false));
   }, []);
-  
 
   if (loading) return <p className="text-center text-gray-500">Loading...</p>;
 
@@ -33,14 +36,14 @@ export default function CoworkingList() {
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 animate-fade-up">
       {spaces.map((space) => (
         <CoworkingCard
-        key={space._id}
-        id={space._id} // ✅ เพิ่ม id เพื่อใช้ link
-        name={space.name}
-        location={space.location}
-        image={space.image}
-        hours={space.hours}
-        features={space.features}
-      />
+          key={space._id}
+          id={space._id}
+          name={space.name}
+          address={space.address}
+          openTime={space.openTime}
+          closeTime={space.closeTime}
+          image={space.image} // ถ้ามี field image ในอนาคต
+        />
       ))}
     </div>
   );
