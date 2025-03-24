@@ -1,28 +1,26 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import DateReserve from "@/components/DateReserve";
-import Image from "next/image";
+import useAuthStore from "@/stores/useAuthStore";
+import useHydrated from "@/stores/useHydrated";
 
 export default function Reservation() {
   const urlParams = useSearchParams();
   const cid = urlParams.get("id");
   const model = urlParams.get("model");
   const router = useRouter();
-
-  const hasCheckedAuth = useRef(false); // ✅ ใช้ป้องกัน alert ซ้ำ
+  const { isLoggedIn } = useAuthStore();
+  const hydrated = useHydrated();
 
   useEffect(() => {
-    if (hasCheckedAuth.current) return; // ✅ เช็คว่ารันไปแล้ว
-    hasCheckedAuth.current = true;
-
-    const token = localStorage.getItem("token");
-    if (!token) {
-      alert("Please sign in to make a reservation.");
+    if (!hydrated) return;
+    
+    if (!isLoggedIn) {
       router.push("/signin");
     }
-  }, []);
+  }, [isLoggedIn]);
 
   return (
     <main className="min-h-screen pt-[80px] pb-20 px-4 flex flex-col items-center bg-gradient-to-b from-white to-cyan-50">

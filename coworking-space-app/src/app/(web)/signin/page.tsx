@@ -3,39 +3,38 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import userLogin from "@/libs/userLogin";
+import useAuthStore from "@/stores/useAuthStore";
 
 export default function SignInPage() {
   const router = useRouter();
+  const { login } = useAuthStore();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+
     try {
       const result = await userLogin(email, password);
-  
+
       if (result.token) {
-        localStorage.setItem("token", result.token);
-  
         const payload = JSON.parse(atob(result.token.split(".")[1]));
-        localStorage.setItem("userId", payload.id);
-  
-        // ✅ ดึงข้อมูลผู้ใช้ด้วย token
+        const userId = payload.id;
+
+        // ดึงข้อมูลผู้ใช้เพื่อดู role
         const res = await fetch("https://project-backend-co-working-space.vercel.app/api/v1/auth/me", {
           headers: {
             Authorization: `Bearer ${result.token}`,
           },
         });
-  
+
         const user = await res.json();
-        console.log("🧑 User data from /me:", user);
-  
-        if (user && user.data?.role) {
-          localStorage.setItem("role", user.data.role); // ✅ เก็บ role จาก response
-        }
-  
+        const role = user?.data?.role || "user";
+
+        // บันทึกเข้าสู่ Zustand store
+        login(result.token, userId, role);
+
         alert("Login successful!");
         router.push("/");
       } else {
@@ -46,7 +45,6 @@ export default function SignInPage() {
       alert("Invalid email or password.");
     }
   };
-  
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white to-cyan-50 px-4">

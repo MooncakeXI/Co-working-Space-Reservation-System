@@ -12,13 +12,14 @@ import {
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/redux/store";
-import { addBooking } from "@/redux/features/bookSlice";
 import dayjs, { Dayjs } from "dayjs";
 import getCoworkingspaces from "@/libs/getCoworkingspaces";
 import { useSearchParams } from "next/navigation";
+import useBookingStore from "@/stores/useBookingStore";
+import useAuthStore from "@/stores/useAuthStore";
 
+
+// Type
 type Coworking = {
   _id: string;
   name: string;
@@ -29,10 +30,8 @@ type Coworking = {
 };
 
 export default function DateReserve() {
-  const dispatch = useDispatch<AppDispatch>();
   const searchParams = useSearchParams();
   const modelFromURL = searchParams.get("model");
-
   const [name, setName] = useState("");
   const [tel, setTel] = useState("");
   const [coworkingspace, setCoworkingspace] = useState("");
@@ -41,7 +40,10 @@ export default function DateReserve() {
   const [roomNumber, setRoomNumber] = useState<number>(0);
   const [coworkingspaceList, setCoworkingspaceList] = useState<Coworking[]>([]);
   const [loading, setLoading] = useState(true);
+  const { addBooking } = useBookingStore();
+  const { userId, token } = useAuthStore();
 
+  
   const selectedBranch = coworkingspaceList.find(
     (branch) => branch.name === coworkingspace
   );
@@ -72,37 +74,6 @@ export default function DateReserve() {
     fetchCoworkingspaces();
   }, [modelFromURL]);
 
-  const isRoomAvailable = async (): Promise<boolean> => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(
-        `https://project-backend-co-working-space.vercel.app/api/v1/reservations?coworkingspace=${selectedBranch?._id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      const data = await res.json();
-
-      if (!res.ok || !Array.isArray(data.reservations)) {
-        console.error("Invalid reservation data", data);
-        return false;
-      }
-
-      return !data.reservations.some((r: any) => {
-        return (
-          r.room_number === roomNumber &&
-          dayjs(startTime).isBefore(dayjs(r.endTime)) &&
-          dayjs(endTime).isAfter(dayjs(r.startTime))
-        );
-      });
-    } catch (error) {
-      console.error("Error checking room availability:", error);
-      return false;
-    }
-  };
-
   const makeReservation = async () => {
     if (
       name &&
@@ -113,22 +84,20 @@ export default function DateReserve() {
       roomNumber &&
       selectedBranch
     ) {
-      const userId = localStorage.getItem("userId");
-      const token = localStorage.getItem("token");
-  
       if (!userId || !token) {
         alert("You must be logged in to make a reservation.");
         return;
       }
-  
+
       const reservation = {
         user: userId,
         coworkingspace: selectedBranch._id,
-        startTime: dayjs(startTime).toISOString(),
-        endTime: dayjs(endTime).toISOString(),
+        startTime: dayjs(startTime).locale("th").toISOString(),
+        endTime: dayjs(endTime).locale("th").toISOString(),
         room_number: roomNumber,
       };
-  
+
+
       try {
         const res = await fetch(
           "https://project-backend-co-working-space.vercel.app/api/v1/reservations",
@@ -141,12 +110,19 @@ export default function DateReserve() {
             body: JSON.stringify(reservation),
           }
         );
-  
+
         const data = await res.json();
-  
+
         if (res.ok) {
           alert("Your booking has been submitted!");
-          console.log("Reservation created:", data);
+          addBooking({
+            nameLastname: name,
+            tel,
+            coworkingspace,
+            startTime: startTime.toISOString(),
+            endTime: endTime.toISOString(),
+            room_number: roomNumber,
+          });
         } else {
           console.error("Reservation error:", data);
           alert(data.message || "This room is already booked at that time.");
@@ -159,7 +135,6 @@ export default function DateReserve() {
       alert("Please fill in all fields!");
     }
   };
-  
 
   return (
     <div className="bg-white rounded-xl shadow-md p-6 w-full max-w-2xl flex flex-wrap gap-6 justify-center">
