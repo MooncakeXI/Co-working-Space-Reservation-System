@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import getReservations from "@/libs/getReservations";
-import dayjs from "dayjs";
-import type { Dayjs } from "dayjs";
+import { updateReservation } from "@/libs/updateReservation";
+import { deleteReservation } from "@/libs/deleteReservation";
+import searchReservations from "@/libs/searchReservations";
+import dayjs, { Dayjs } from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -27,66 +29,85 @@ type Reservation = {
 export default function BookingList() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
-  const { userId, role, token } = useAuthStore();
+  const { userId, role } = useAuthStore();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newStart, setNewStart] = useState<Dayjs | null>(null);
   const [newEnd, setNewEnd] = useState<Dayjs | null>(null);
+  const [searchStart, setSearchStart] = useState<Dayjs | null>(null);
+  const [searchEnd, setSearchEnd] = useState<Dayjs | null>(null);
   const hydrated = useHydrated();
-  
+
   useEffect(() => {
-
     if (!hydrated) return;
-
-    const fetchReservations = async () => {
-      try {
-        const data = await getReservations();
-        const allReservations = data.data;
-
-        if (Array.isArray(allReservations)) {
-          if (role === "admin") {
-            setReservations(allReservations);
-          } else if (userId) {
-            const myBookings = allReservations.filter((r) => {
-              const bookingUserId = typeof r.user === "string" ? r.user : r.user?._id;
-              console.log("📌 bookingUserId:", bookingUserId, "| current userId:", userId);
-              return bookingUserId === userId;
-            });
-            setReservations(myBookings);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to load reservations:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchReservations();
-  }, [userId, role]);
+  }, [userId, role, hydrated]);
+
+  const fetchReservations = async () => {
+    try {
+      const data = await getReservations();
+      const allReservations = data.data;
+
+      if (Array.isArray(allReservations)) {
+        if (role === "admin") {
+          setReservations(allReservations);
+        } else if (userId) {
+          const myBookings = allReservations.filter((r) => {
+            const bookingUserId = typeof r.user === "string" ? r.user : r.user?._id;
+            return bookingUserId === userId;
+          });
+          setReservations(myBookings);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load reservations:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = async () => {
+    if (!searchStart || !searchEnd) {
+      alert("Please select both start and end time.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await searchReservations(searchStart, searchEnd);
+      if (res.ok) {
+        const data = await res.json();
+        const filtered = data.data;
+        if (role === "admin") {
+          setReservations(filtered);
+        } else if (userId) {
+          const myFiltered = filtered.filter((r: any) => {
+            const bookingUserId = typeof r.user === "string" ? r.user : r.user?._id;
+            return bookingUserId === userId;
+          });
+          setReservations(myFiltered);
+        }
+      } else {
+        const err = await res.json();
+        alert(err.message || "Search failed.");
+      }
+    } catch (err: any) {
+      alert(err.message || "Search error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDelete = async (id: string) => {
     const confirmDelete = confirm("Are you sure you want to delete this booking?");
     if (!confirmDelete) return;
 
     try {
-      
-      const res = await fetch(`https://project-backend-co-working-space.vercel.app/api/v1/reservations/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (res.ok) {
-        setReservations((prev) => prev.filter((r) => r._id !== id));
-        alert("Booking deleted successfully!");
-      } else {
-        const data = await res.json();
-        alert(data.message || "Failed to delete booking.");
-      }
-    } catch (err) {
+      await deleteReservation(id);
+      setReservations((prev) => prev.filter((r) => r._id !== id));
+      alert("Booking deleted successfully!");
+    } catch (err: any) {
       console.error("Error deleting booking:", err);
-      alert("Error deleting booking.");
+      alert(err.message || "Error deleting booking.");
     }
   };
 
@@ -97,136 +118,152 @@ export default function BookingList() {
     }
 
     try {
-      const res = await fetch(`https://project-backend-co-working-space.vercel.app/api/v1/reservations/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          startTime: newStart.toISOString(),
-          endTime: newEnd.toISOString(),
-        }),
+      await updateReservation(id, {
+        startTime: newStart.toISOString(),
+        endTime: newEnd.toISOString(),
       });
 
-      const data = await res.json();
-
-      if (res.ok) {
-        alert("Reservation updated!");
-        setEditingId(null);
-        setReservations((prev) =>
-          prev.map((r) =>
-            r._id === id
-              ? { ...r, startTime: newStart.toISOString(), endTime: newEnd.toISOString() }
-              : r
-          )
-        );
-      } else {
-        alert(data.message || "Update failed.");
-      }
-    } catch (err) {
-      console.error("Error updating booking:", err);
-      alert("Error updating booking.");
+      alert("Reservation updated!");
+      setEditingId(null);
+      setReservations((prev) =>
+        prev.map((r) =>
+          r._id === id
+            ? { ...r, startTime: newStart.toISOString(), endTime: newEnd.toISOString() }
+            : r
+        )
+      );
+    } catch (err: any) {
+      alert(err.message || "Error updating reservation");
     }
   };
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-6 text-sky-800">My Bookings</h2>
+      <div className="p-6 max-w-4xl mx-auto">
+    <h2 className="text-3xl font-bold mb-6 text-center text-sky-700 drop-shadow-sm">
+      📘 My Bookings
+    </h2>
 
-      {role === "admin" && (
-        <p className="text-sm text-green-600 font-medium mb-4">
-          👑 You are viewing all reservations as an admin.
-        </p>
-      )}
+    {role === "admin" && (
+      <p className="text-sm text-green-600 font-medium mb-6 text-center">
+        👑 You are viewing all reservations as an admin.
+      </p>
+    )}
 
-      {loading ? (
-        <p className="text-center text-gray-500">Loading...</p>
-      ) : reservations.length === 0 ? (
-        <p className="text-center text-gray-500">You have no bookings.</p>
-      ) : (
-        <div className="space-y-4">
-          {reservations.map((item) => {
-            const bookingUserId = typeof item.user === "string" ? item.user : item.user?._id;
-            const canEditOrDelete = role === "admin" || bookingUserId === userId;
+    {/* ตัวค้นหา */}
+    <div className="mb-8 bg-white/80 backdrop-blur-md p-6 rounded-xl shadow-md border border-sky-100">
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <div className="flex flex-col md:flex-row gap-4 mb-4">
+          <DateTimePicker
+            label="Start Time"
+            value={searchStart}
+            onChange={(val) => setSearchStart(val)}
+            slotProps={{ textField: { fullWidth: true } }}
+          />
+          <DateTimePicker
+            label="End Time"
+            value={searchEnd}
+            onChange={(val) => setSearchEnd(val)}
+            slotProps={{ textField: { fullWidth: true } }}
+          />
+        </div>
+      </LocalizationProvider>
+      <div className="text-right">
+        <button
+          onClick={handleSearch}
+          className="bg-sky-600 hover:bg-sky-700 text-white px-6 py-2 rounded shadow transition-all"
+        >
+          🔍 Search
+        </button>
+      </div>
+    </div>
 
-            return (
-              <div key={item._id} className="bg-white border border-gray-200 rounded-lg shadow p-4">
+    {loading ? (
+      <p className="text-center text-gray-500">Loading...</p>
+    ) : reservations.length === 0 ? (
+      <p className="text-center text-gray-400 italic">No bookings found.</p>
+    ) : (
+      <div className="space-y-6">
+        {reservations.map((item) => {
+          const bookingUserId = typeof item.user === "string" ? item.user : item.user?._id;
+          const canEditOrDelete = role === "admin" || bookingUserId === userId;
+
+          return (
+            <div key={item._id} className="bg-white rounded-xl shadow-md border border-sky-100 p-6 transition hover:shadow-lg">
               <div className="text-lg font-semibold text-sky-700 mb-1">
-                {typeof item.coworkingspace === "string"
+                📍 {typeof item.coworkingspace === "string"
                   ? item.coworkingspace
                   : item.coworkingspace.name}
               </div>
 
-              {item.nameLastname && (
-                <p className="text-sm text-gray-600 italic">
-                  👤 Booked by: <span className="font-medium text-gray-800">{item.nameLastname}</span>
-                </p>
-              )}
-              {item.tel && (
-                <p className="text-sm text-gray-600 italic">
-                  📞 Phone: <span className="font-medium text-gray-800">{item.tel}</span>
-                </p>
-              )}
-
-              <p className="text-sm text-gray-700">Room: {item.room_number}</p>
-              <p className="text-sm text-gray-700">Start: {dayjs.utc(item.startTime).format("MMMM D, YYYY h:mm A")}</p>
-              <p className="text-sm text-gray-700">End: {dayjs.utc(item.endTime).format("MMMM D, YYYY h:mm A")}</p>{item.nameLastname && <p className="text-sm text-gray-700">Name: {item.nameLastname}</p>}
-                {item.tel && <p className="text-sm text-gray-700">Phone: {item.tel}</p>}
-                {canEditOrDelete && editingId === item._id ? (
-                    <div className="mt-4 w-full bg-gray-50 p-4 rounded-lg shadow-inner space-y-4">
-                      <LocalizationProvider dateAdapter={AdapterDayjs}>
-                        <div className="flex flex-col sm:flex-row gap-4">
-                          <DateTimePicker
-                            label="New Start Time"
-                            value={newStart}
-                            onChange={setNewStart}
-                            slotProps={{ textField: { fullWidth: true } }}
-                          />
-                          <DateTimePicker
-                            label="New End Time"
-                            value={newEnd}
-                            onChange={setNewEnd}
-                            slotProps={{ textField: { fullWidth: true } }}
-                          />
-                        </div>
-                      </LocalizationProvider>
-
-                      <div className="flex justify-end">
-                        <button
-                          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
-                          onClick={() => handleEdit(item._id)}
-                        >
-                          Save
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="mt-4 flex gap-3">
-                      <button
-                        className="px-4 py-1 rounded bg-yellow-500 text-white hover:bg-yellow-600 text-sm"
-                        onClick={() => {
-                          setEditingId(item._id);
-                          setNewStart(dayjs(item.startTime));
-                          setNewEnd(dayjs(item.endTime));
-                        }}
-                      >
-                        Edit 
-                      </button>
-                      <button
-                        className="px-4 py-1 rounded bg-red-500 text-white hover:bg-red-600 text-sm"
-                        onClick={() => handleDelete(item._id)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
-
+              <div className="text-sm text-gray-700 space-y-1">
+                {item.nameLastname && (
+                  <p>
+                    👤 <span className="font-medium">{item.nameLastname}</span>
+                  </p>
+                )}
+                {item.tel && (
+                  <p>
+                    📞 <span className="font-medium">{item.tel}</span>
+                  </p>
+                )}
+                <p>🏠 Room: {item.room_number}</p>
+                <p>🕒 Start: {dayjs.utc(item.startTime).format("MMMM D, YYYY h:mm A")}</p>
+                <p>⏰ End: {dayjs.utc(item.endTime).format("MMMM D, YYYY h:mm A")}</p>
               </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
+
+              {canEditOrDelete && editingId === item._id ? (
+                <div className="mt-4 bg-sky-50 p-4 rounded-xl shadow-inner space-y-4">
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <DateTimePicker
+                        label="New Start Time"
+                        value={newStart}
+                        onChange={setNewStart}
+                        slotProps={{ textField: { fullWidth: true } }}
+                      />
+                      <DateTimePicker
+                        label="New End Time"
+                        value={newEnd}
+                        onChange={setNewEnd}
+                        slotProps={{ textField: { fullWidth: true } }}
+                      />
+                    </div>
+                  </LocalizationProvider>
+                  <div className="flex justify-end gap-2">
+                    <button
+                      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+                      onClick={() => handleEdit(item._id)}
+                    >
+                      ✅ Save
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-4 flex gap-3">
+                  <button
+                    className="px-4 py-1 rounded bg-yellow-500 text-white hover:bg-yellow-600 text-sm"
+                    onClick={() => {
+                      setEditingId(item._id);
+                      setNewStart(dayjs(item.startTime));
+                      setNewEnd(dayjs(item.endTime));
+                    }}
+                  >
+                    ✏️ Edit
+                  </button>
+                  <button
+                    className="px-4 py-1 rounded bg-red-500 text-white hover:bg-red-600 text-sm"
+                    onClick={() => handleDelete(item._id)}
+                  >
+                    🗑️ Delete
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    )}
+  </div>
+
   );
 }

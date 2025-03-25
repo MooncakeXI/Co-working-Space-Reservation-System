@@ -43,6 +43,10 @@ export default function DateReserve() {
   const { addBooking } = useBookingStore();
   const { userId, token } = useAuthStore();
 
+  const formatToUTCString = (date: Dayjs | null) => {
+    return date ? dayjs(date).format("YYYY-MM-DDTHH:mm:ss") + "Z" : null;
+  };
+  
   
   const selectedBranch = coworkingspaceList.find(
     (branch) => branch.name === coworkingspace
@@ -90,12 +94,14 @@ export default function DateReserve() {
       }
 
       const reservation = {
-        user: userId,
-        coworkingspace: selectedBranch._id,
-        startTime: dayjs(startTime).locale("th").toISOString(),
-        endTime: dayjs(endTime).locale("th").toISOString(),
-        room_number: roomNumber,
-      };
+      user: userId,
+      coworkingspace: selectedBranch._id,
+      startTime: formatToUTCString(startTime),
+      endTime: formatToUTCString(endTime),
+      room_number: roomNumber,
+    };
+
+      
 
 
       try {
