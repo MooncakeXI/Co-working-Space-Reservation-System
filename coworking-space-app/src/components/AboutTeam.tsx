@@ -20,7 +20,7 @@ function AboutTeam() {
             {
                 name: "Watthanakorn Rakthong",
                 SID: "6633224521",
-                img: "/img/profile_vine.jpg",
+                img: "/img/korn.jpg",
             },
             ].map((member, i) => (
             <div
