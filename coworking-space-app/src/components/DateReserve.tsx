@@ -43,8 +43,8 @@ export default function DateReserve() {
   const { addBooking } = useBookingStore();
   const { userId, token } = useAuthStore();
 
-  const formatToUTCString = (date: Dayjs | null) => {
-    return date ? dayjs(date).format("YYYY-MM-DDTHH:mm:ss") + "Z" : null;
+  const formatToLocalISOString = (date: Dayjs | null) => {
+    return date ? dayjs(date).format("YYYY-MM-DDTHH:mm:ss") : null;
   };
   
   
@@ -94,15 +94,13 @@ export default function DateReserve() {
       }
 
       const reservation = {
-      user: userId,
-      coworkingspace: selectedBranch._id,
-      startTime: formatToUTCString(startTime),
-      endTime: formatToUTCString(endTime),
-      room_number: roomNumber,
-    };
-
+        user: userId,
+        coworkingspace: selectedBranch._id,
+        startTime: formatToLocalISOString(startTime),
+        endTime: formatToLocalISOString(endTime),
+        room_number: roomNumber,
+      };
       
-
 
       try {
         const res = await fetch(
