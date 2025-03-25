@@ -16,11 +16,13 @@ export default function Reservation() {
 
   useEffect(() => {
     if (!hydrated) return;
-    
     if (!isLoggedIn) {
       router.push("/signin");
     }
-  }, [isLoggedIn]);
+  }, [hydrated, isLoggedIn]);
+
+  // 🛡️ Guard: อย่า render ถ้า hydrate ไม่เสร็จ หรือยังไม่ได้ login
+  if (!hydrated || !isLoggedIn) return null;
 
   return (
     <main className="min-h-screen pt-[80px] pb-20 px-4 flex flex-col items-center bg-gradient-to-b from-white to-cyan-50">
