@@ -48,6 +48,8 @@ export default function DateReserve() {
   };
   
   
+  
+  
   const selectedBranch = coworkingspaceList.find(
     (branch) => branch.name === coworkingspace
   );
@@ -103,6 +105,7 @@ export default function DateReserve() {
       
 
       try {
+        console.log("Reservation data:", reservation);
         const res = await fetch(
           "https://project-backend-co-working-space.vercel.app/api/v1/reservations",
           {

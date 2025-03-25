@@ -36,7 +36,16 @@ export default function BookingList() {
   const [searchStart, setSearchStart] = useState<Dayjs | null>(null);
   const [searchEnd, setSearchEnd] = useState<Dayjs | null>(null);
   const hydrated = useHydrated();
-
+  const formatToThaiISOString = (date: Dayjs | null): string => {
+    return dayjs(date || undefined).utcOffset(7).format("YYYY-MM-DDTHH:mm:ssZ");
+  };
+  
+  const formatAsLocalString = (date: Dayjs | null): string => {
+    return dayjs(date || undefined).format("YYYY-MM-DDTHH:mm:ss");
+  };
+  
+  
+  
   useEffect(() => {
     if (!hydrated) return;
     fetchReservations();
@@ -70,18 +79,27 @@ export default function BookingList() {
       alert("Please select both start and end time.");
       return;
     }
-
+  
+    // ✅ ส่งเวลาแบบ UTC ไปให้ backend
+    const formattedStart = formatAsLocalString(searchStart); // ส่งเป็น Local Time → "2025-03-26T15:00:00"
+    const formattedEnd = formatAsLocalString(searchEnd);
+    
+  
     try {
+      console.log(formattedStart, formattedEnd);
       setLoading(true);
-      const res = await searchReservations(searchStart, searchEnd);
+      const res = await searchReservations(formattedStart, formattedEnd);
+  
       if (res.ok) {
         const data = await res.json();
         const filtered = data.data;
+  
         if (role === "admin") {
           setReservations(filtered);
         } else if (userId) {
           const myFiltered = filtered.filter((r: any) => {
-            const bookingUserId = typeof r.user === "string" ? r.user : r.user?._id;
+            const bookingUserId =
+              typeof r.user === "string" ? r.user : r.user?._id;
             return bookingUserId === userId;
           });
           setReservations(myFiltered);
@@ -96,6 +114,8 @@ export default function BookingList() {
       setLoading(false);
     }
   };
+  
+  
 
   const handleDelete = async (id: string) => {
     const confirmDelete = confirm("Are you sure you want to delete this booking?");
@@ -116,13 +136,16 @@ export default function BookingList() {
       alert("Please select start and end time");
       return;
     }
-
+  
+    const formattedStart = formatToThaiISOString(newStart);
+    const formattedEnd = formatToThaiISOString(newEnd);
+  
     try {
       await updateReservation(id, {
-        startTime: newStart.toISOString(),
-        endTime: newEnd.toISOString(),
+        startTime: formattedStart,
+        endTime: formattedEnd,
       });
-
+  
       alert("Reservation updated!");
       setEditingId(null);
       setReservations((prev) =>
@@ -136,6 +159,8 @@ export default function BookingList() {
       alert(err.message || "Error updating reservation");
     }
   };
+  
+  
 
   return (
       <div className="p-6 max-w-4xl mx-auto">
@@ -207,8 +232,8 @@ export default function BookingList() {
                   </p>
                 )}
                 <p>🏠 Room: {item.room_number}</p>
-                <p>🕒 Start: {dayjs.utc(item.startTime).format("MMMM D, YYYY h:mm A")}</p>
-                <p>⏰ End: {dayjs.utc(item.endTime).format("MMMM D, YYYY h:mm A")}</p>
+                <p>🕒 Start: {dayjs(item.startTime).utc().format("YYYY-MM-DDTHH:mm:ss[Z]")}</p>
+                <p>🕒 End: {dayjs(item.endTime).utc().format("YYYY-MM-DDTHH:mm:ss[Z]")}</p>
               </div>
 
               {canEditOrDelete && editingId === item._id ? (
@@ -244,9 +269,10 @@ export default function BookingList() {
                     className="px-4 py-1 rounded bg-yellow-500 text-white hover:bg-yellow-600 text-sm"
                     onClick={() => {
                       setEditingId(item._id);
-                      setNewStart(dayjs(item.startTime));
-                      setNewEnd(dayjs(item.endTime));
+                      setNewStart(dayjs(item.startTime).utc());
+                      setNewEnd(dayjs(item.endTime).utc());
                     }}
+                    
                   >
                     ✏️ Edit
                   </button>
