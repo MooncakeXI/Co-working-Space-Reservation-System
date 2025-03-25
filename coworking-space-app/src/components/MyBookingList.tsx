@@ -37,8 +37,9 @@ export default function BookingList() {
   const [searchEnd, setSearchEnd] = useState<Dayjs | null>(null);
   const hydrated = useHydrated();
   const formatToThaiISOString = (date: Dayjs | null): string => {
-    return dayjs(date || undefined).utcOffset(7).format("YYYY-MM-DDTHH:mm:ssZ");
+    return dayjs(date || undefined).format("YYYY-MM-DDTHH:mm:ssZ");
   };
+  
   
   const formatAsLocalString = (date: Dayjs | null): string => {
     return dayjs(date || undefined).format("YYYY-MM-DDTHH:mm:ss");
@@ -141,6 +142,7 @@ export default function BookingList() {
     const formattedEnd = formatToThaiISOString(newEnd);
   
     try {
+      console.log("Updating reservation:", id, formattedStart, formattedEnd);
       await updateReservation(id, {
         startTime: formattedStart,
         endTime: formattedEnd,
