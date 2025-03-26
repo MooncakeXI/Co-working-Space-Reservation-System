@@ -52,7 +52,7 @@ To get started with the project, follow these steps:
 - `npm run start`: Starts the production server.
 - `npm run lint`: Runs the linter.
 
-##Deploy
+## Deploy
 
 Vercel : https://co-working-space-reservation-system.vercel.app/
 
